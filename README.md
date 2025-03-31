@@ -15,7 +15,7 @@ A powerful tool that uses AI to create professional presentations in minutes.
 
 1. Clone the repository
    ```
-   git clone https://github.com/yourusername/ai-presentation-maker.git
+   git clone https://github.com/prakhar1009/ai-presentation-maker.git
    cd ai-presentation-maker
    ```
 
