@@ -1,4 +1,4 @@
-# AI Presentation Maker
+# AI Presentation generator
 
 A powerful tool that uses AI to create professional presentations in minutes.
 
