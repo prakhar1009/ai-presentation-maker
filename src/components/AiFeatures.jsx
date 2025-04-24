@@ -14,7 +14,7 @@ export const AiAssistant = ({
     </h3>
     
     <p className="assistant-description">
-      Let our AI assistant generate professional content based on your inputs. Get complete slide suggestions, compelling bullet points, and speaker notes with data visualizations and charts where appropriate.
+      Let our AI assistant generate professional content based on your inputs. Get complete slide suggestions, compelling bullet points, and speaker notes for your presentation.
     </p>
     
     <div className="assistant-status">
@@ -34,7 +34,7 @@ export const AiAssistant = ({
     {aiStatus === 'generating' && (
       <div className="assistant-generating">
         <div className="assistant-loader"></div>
-        <p>Our AI is creating your presentation with custom content, slides, and visualizations...</p>
+        <p>Our AI is creating your presentation with custom content and slides...</p>
       </div>
     )}
   </div>
@@ -50,7 +50,7 @@ export const ApiKeyModal = ({
   <div className="api-key-modal">
     <div className="api-key-modal-content">
       <h2>Enable AI-Powered Features</h2>
-      <p>To use AI-powered features like content generation, slide suggestions, and automatic chart creation, please enter your Gemini API key.</p>
+      <p>To use AI-powered features like content generation and slide suggestions, please enter your Gemini API key.</p>
       
       <form onSubmit={handleApiKeySubmit}>
         <div className="form-group">
@@ -187,19 +187,7 @@ export const AiContentPreview = ({ aiSuggestions, applyAiSuggestions }) => {
               )}
             </div>
             
-            {slide.type === 'data' && (
-              <div className="chart-indicator">
-                <span className="chart-icon">📊</span>
-                <span>Includes {slide.chartType || 'data'} visualization</span>
-              </div>
-            )}
-            
-            {slide.type === 'example' && (
-              <div className="image-indicator">
-                <span className="image-icon">🖼️</span>
-                <span>Includes visual example</span>
-              </div>
-            )}
+
           </div>
         ))}
       </div>

@@ -179,20 +179,6 @@ const SlidePreview = ({
                 <p>{currentSlide.content}</p>
               )}
             </div>
-            
-            {/* Render chart for data slides */}
-            {currentSlide.chartType && renderChart(currentSlide.chartType)}
-            
-            {/* Placeholder for image */}
-            {currentSlide.imageType && (
-              <div 
-                className="image-placeholder"
-                style={{ borderColor: activeTemplate.secondary }}
-              >
-                <span className="icon">🖼️</span>
-                <span>Image placeholder</span>
-              </div>
-            )}
           </div>
         )}
       </div>

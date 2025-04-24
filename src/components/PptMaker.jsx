@@ -16,6 +16,7 @@ import { saveAs } from 'file-saver';
 import { renderToString } from 'react-dom/server';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import pptxgen from 'pptxgenjs';
 
 const PptMaker = () => {
   // Create PptAgent instance
@@ -169,18 +170,16 @@ const PptMaker = () => {
       },
       {
         id: 6,
-        type: 'data',
+        type: 'concept',
         title: 'Key Statistics',
         content: `${formData.topic} market growth and adoption across industries`,
-        chartType: 'bar',
         notes: `These statistics provide concrete evidence of the impact and growth of ${formData.topic} in recent years.`
       },
       {
         id: 7,
-        type: 'example',
+        type: 'concept',
         title: 'Case Study',
         content: `How leading companies implement ${formData.topic} successfully`,
-        imageType: 'case-study',
         notes: `This case study demonstrates a practical implementation approach that has proven successful.`
       },
       {
@@ -408,11 +407,7 @@ const PptMaker = () => {
           ...aiGeneratedContent,
           slides: aiGeneratedContent.slides.map((slide, index) => ({
             ...slide,
-            id: index + 1,
-            // Add appropriate chart types based on the slide type and content
-            chartType: slide.type === 'data' ? determineChartType(slide) : undefined,
-            // Add image type if it's an example slide
-            imageType: slide.type === 'example' ? 'case-study' : undefined
+            id: index + 1
           }))
         };
         
@@ -522,80 +517,319 @@ const PptMaker = () => {
     }
   };
 
-  // Export presentation as PPTX
-  const exportToPPTX = () => {
-    try {
-      // In a real application, this would use a library like pptxgenjs
-      // For this demo, we'll create a JSON representation
-      const presentationData = JSON.stringify(activePresentation, null, 2);
-      const blob = new Blob([presentationData], { type: 'application/json' });
-      saveAs(blob, `${activePresentation.title.replace(/\s+/g, '_')}_presentation.pptx`);
-    } catch (error) {
-      console.error('Error exporting to PPTX:', error);
-      alert('Failed to export presentation. Please try again.');
+  // Add a new slide
+  const addSlide = () => {
+    if (!activePresentation) return;
+    
+    // Create a new slide with a unique ID
+    const newSlideId = activePresentation.slides.length + 1;
+    const newSlide = {
+      id: newSlideId,
+      type: 'concept',
+      title: `New Slide ${newSlideId}`,
+      content: ['Add your content here', 'Click Edit Content to modify'],
+      notes: 'Speaker notes for this slide.'
+    };
+    
+    // Add the new slide to the presentation
+    const updatedSlides = [...activePresentation.slides, newSlide];
+    setActivePresentation({
+      ...activePresentation,
+      slides: updatedSlides
+    });
+    
+    // Select the newly added slide
+    setSelectedSlide(updatedSlides.length - 1);
+  };
+  
+  // Delete a slide
+  const deleteSlide = (slideIndex) => {
+    if (!activePresentation || activePresentation.slides.length <= 1) return;
+    
+    // Remove the slide at the specified index
+    const updatedSlides = activePresentation.slides.filter((_, index) => index !== slideIndex);
+    
+    // Update slide IDs to maintain sequence
+    const slidesWithUpdatedIds = updatedSlides.map((slide, index) => ({
+      ...slide,
+      id: index + 1
+    }));
+    
+    // Update the active presentation
+    setActivePresentation({
+      ...activePresentation,
+      slides: slidesWithUpdatedIds
+    });
+    
+    // Adjust selected slide if necessary
+    if (slideIndex >= updatedSlides.length) {
+      setSelectedSlide(Math.max(0, updatedSlides.length - 1));
+    }
+  };
+  
+  // Edit slide content
+  const editSlideContent = (slideIndex) => {
+    if (!activePresentation) return;
+    
+    const slide = activePresentation.slides[slideIndex];
+    if (!slide) return;
+    
+    // For title slides, prompt for title and subtitle
+    if (slide.type === 'title') {
+      const newTitle = prompt('Enter slide title:', slide.title);
+      if (newTitle === null) return; // User canceled
+      
+      const newSubtitle = prompt('Enter slide subtitle:', slide.subtitle);
+      if (newSubtitle === null) return; // User canceled
+      
+      // Update the slide
+      const updatedSlides = [...activePresentation.slides];
+      updatedSlides[slideIndex] = {
+        ...slide,
+        title: newTitle,
+        subtitle: newSubtitle
+      };
+      
+      setActivePresentation({
+        ...activePresentation,
+        slides: updatedSlides
+      });
+    } 
+    // For slides with bullet points
+    else if (Array.isArray(slide.content)) {
+      // Convert array to string for easier editing
+      const contentStr = slide.content.join('\n');
+      const newTitle = prompt('Enter slide title:', slide.title);
+      if (newTitle === null) return; // User canceled
+      
+      const newContent = prompt('Enter slide content (one bullet point per line):', contentStr);
+      if (newContent === null) return; // User canceled
+      
+      // Split content back into array by line breaks
+      const contentArray = newContent.split('\n').filter(item => item.trim() !== '');
+      
+      // Update the slide
+      const updatedSlides = [...activePresentation.slides];
+      updatedSlides[slideIndex] = {
+        ...slide,
+        title: newTitle,
+        content: contentArray
+      };
+      
+      setActivePresentation({
+        ...activePresentation,
+        slides: updatedSlides
+      });
+    } 
+    // For slides with paragraph content
+    else {
+      const newTitle = prompt('Enter slide title:', slide.title);
+      if (newTitle === null) return; // User canceled
+      
+      const newContent = prompt('Enter slide content:', slide.content);
+      if (newContent === null) return; // User canceled
+      
+      // Update the slide
+      const updatedSlides = [...activePresentation.slides];
+      updatedSlides[slideIndex] = {
+        ...slide,
+        title: newTitle,
+        content: newContent
+      };
+      
+      setActivePresentation({
+        ...activePresentation,
+        slides: updatedSlides
+      });
     }
   };
 
-  // Export presentation as PDF
+  // Export presentation as PPTX using PptxGenJS
+  const exportToPPTX = async () => {
+    try {
+      // Create a new presentation
+      let pptx = new pptxgen();
+      
+      // Set presentation properties
+      pptx.author = 'AI Presentation Maker';
+      pptx.title = activePresentation.title;
+      pptx.subject = 'Generated Presentation';
+      
+      // Set the template colors based on the selected template
+      const primaryColor = templates[template].primary;
+      const secondaryColor = templates[template].secondary;
+      
+      // Process each slide
+      activePresentation.slides.forEach((slide, index) => {
+        // Add a new slide
+        let pptSlide = pptx.addSlide();
+        
+        // Add slide background with a slight gradient
+        pptSlide.background = { color: '#FFFFFF' };
+        
+        // Add a header bar with the template color
+        pptSlide.addShape('rect', { 
+          x: 0, y: 0, w: '100%', h: 0.5, 
+          fill: { color: primaryColor }
+        });
+        
+        // Handle different slide types
+        if (slide.type === 'title') {
+          // Title slide
+          pptSlide.addText(slide.title, { 
+            x: 0.5, y: 2, w: '90%', h: 1.5,
+            fontSize: 44, color: primaryColor, bold: true,
+            align: 'center'
+          });
+          
+          if (slide.subtitle) {
+            pptSlide.addText(slide.subtitle, { 
+              x: 0.5, y: 3.5, w: '90%', h: 1,
+              fontSize: 28, color: secondaryColor,
+              align: 'center'
+            });
+          }
+          
+          // Add date at the bottom
+          pptSlide.addText(`Presentation Date: ${new Date().toLocaleDateString()}`, { 
+            x: 0.5, y: 5, w: '90%', h: 0.5,
+            fontSize: 14, color: '#666666',
+            align: 'center'
+          });
+          
+        } else {
+          // Content slides
+          // Add slide title
+          pptSlide.addText(slide.title, { 
+            x: 0.5, y: 0.6, w: '90%', h: 0.8,
+            fontSize: 32, color: primaryColor, bold: true
+          });
+          
+          // Add content based on type
+          if (Array.isArray(slide.content)) {
+            // Bullet points
+            slide.content.forEach((item, i) => {
+              pptSlide.addText(item, { 
+                x: 0.7, y: 1.6 + (i * 0.6), w: '85%', h: 0.5,
+                fontSize: 18, bullet: { type: 'bullet' },
+                color: '#333333'
+              });
+            });
+          } else if (slide.content) {
+            // Paragraph content
+            pptSlide.addText(slide.content, { 
+              x: 0.7, y: 1.6, w: '85%', h: 2,
+              fontSize: 18, color: '#333333'
+            });
+          }
+        }
+        
+        // Add speaker notes if they exist and are enabled
+        if (slide.notes && formData.includeNotes) {
+          pptSlide.addNotes(slide.notes);
+        }
+      });
+      
+      // Save the presentation
+      const fileName = `${activePresentation.title.replace(/\s+/g, '_')}.pptx`;
+      await pptx.writeFile({ fileName });
+      
+      // Show success message
+      alert('PowerPoint file created successfully! You can now open it directly in Microsoft PowerPoint.');
+      
+    } catch (error) {
+      console.error('Error exporting to PPTX:', error);
+      alert('Failed to export presentation. Error: ' + error.message);
+    }
+  };
+
+  // Export presentation as PDF - completely revised approach
   const exportToPDF = async () => {
     try {
-      if (!slidePreviewRef.current) {
-        alert('Please wait for the presentation to load completely.');
-        return;
-      }
-
+      // Create a new PDF document
       const doc = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
         format: [297, 210] // A4 landscape
       });
-
-      // For each slide, we need to capture it as an image
-      const slideElements = slidePreviewRef.current.querySelectorAll('.slide-preview');
       
-      // If there are no slide elements, use a fallback approach
-      if (slideElements.length === 0) {
-        doc.text('Presentation: ' + activePresentation.title, 10, 10);
+      // Set some basic styles
+      doc.setFont('helvetica');
+      doc.setFontSize(28);
+      
+      // Add a cover page with the presentation title
+      doc.setTextColor(templates[template].primary.replace('#', ''));
+      doc.text(activePresentation.title, 20, 30);
+      
+      // Add date
+      doc.setFontSize(12);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Created: ${new Date().toLocaleDateString()}`, 20, 40);
+      
+      // Process each slide
+      activePresentation.slides.forEach((slide, index) => {
+        // Add a new page for each slide (except the first one which is the cover)
+        if (index > 0) {
+          doc.addPage();
+        }
         
-        let yPosition = 20;
-        activePresentation.slides.forEach((slide, index) => {
-          doc.text(`Slide ${index + 1}: ${slide.title}`, 10, yPosition);
-          yPosition += 10;
+        // Add slide number
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Slide ${index + 1}`, 270, 200);
+        
+        // Add a colored header bar
+        doc.setFillColor(templates[template].primary.replace('#', ''));
+        doc.rect(0, 0, 297, 15, 'F');
+        
+        // Add slide title
+        doc.setFontSize(24);
+        doc.setTextColor(templates[template].primary.replace('#', ''));
+        doc.text(slide.title, 20, 30);
+        
+        // Handle different slide types
+        if (slide.type === 'title' && slide.subtitle) {
+          doc.setFontSize(18);
+          doc.setTextColor(templates[template].secondary.replace('#', ''));
+          doc.text(slide.subtitle, 20, 45);
+        } else {
+          // Add content
+          doc.setFontSize(14);
+          doc.setTextColor(0, 0, 0);
+          
+          let yPosition = 50;
           
           if (Array.isArray(slide.content)) {
-            slide.content.forEach(item => {
-              doc.text(`• ${item}`, 15, yPosition);
-              yPosition += 5;
+            // For bullet points
+            slide.content.forEach((item, i) => {
+              doc.text(`• ${item}`, 30, yPosition);
+              yPosition += 10;
             });
-          } else if (slide.content) {
-            doc.text(`• ${slide.content}`, 15, yPosition);
+          } else if (typeof slide.content === 'string' && slide.content) {
+            // For paragraph content
+            const textLines = doc.splitTextToSize(slide.content, 250);
+            doc.text(textLines, 20, yPosition);
           }
           
-          yPosition += 10;
-        });
-      } else {
-        // Use html2canvas to capture each slide
-        for (let i = 0; i < Math.min(slideElements.length, 1); i++) {
-          const canvas = await html2canvas(slideElements[i], {
-            scale: 2,
-            logging: false,
-            useCORS: true
-          });
-          
-          const imgData = canvas.toDataURL('image/jpeg', 1.0);
-          
-          if (i > 0) {
-            doc.addPage();
+          // Add speaker notes if they exist and are enabled
+          if (slide.notes && formData.includeNotes) {
+            yPosition = Math.max(yPosition, 150); // Ensure notes start at a reasonable position
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text('Speaker Notes:', 20, yPosition);
+            
+            const noteLines = doc.splitTextToSize(slide.notes, 250);
+            doc.text(noteLines, 20, yPosition + 7);
           }
-          
-          doc.addImage(imgData, 'JPEG', 10, 10, 277, 190);
         }
-      }
+      });
       
+      // Save the PDF
       doc.save(`${activePresentation.title.replace(/\s+/g, '_')}_presentation.pdf`);
+      alert('PDF exported successfully!');
     } catch (error) {
       console.error('Error exporting to PDF:', error);
-      alert('Failed to export PDF. Please try again.');
+      alert('Failed to export PDF: ' + error.message);
     }
   };
   
@@ -867,6 +1101,9 @@ const PptMaker = () => {
               template={template}
               setTemplate={setTemplate}
               templates={templates}
+              addSlide={addSlide}
+              deleteSlide={deleteSlide}
+              editSlideContent={editSlideContent}
             />
             
             {/* Slide preview */}

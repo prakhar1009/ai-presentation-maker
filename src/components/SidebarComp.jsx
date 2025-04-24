@@ -6,7 +6,10 @@ const SidebarComp = ({
   setSelectedSlide, 
   template, 
   setTemplate, 
-  templates 
+  templates,
+  addSlide,
+  deleteSlide,
+  editSlideContent
 }) => {
   return (
     <div className="sidebar">
@@ -57,17 +60,27 @@ const SidebarComp = ({
           Slide Options
         </h3>
         <div className="slide-options">
-          <button className="sidebar-button">
+          <button 
+            className="sidebar-button"
+            onClick={() => editSlideContent(selectedSlide)}
+          >
             <span className="icon">📝</span>
             Edit Content
           </button>
-          <button className="sidebar-button">
-            <span className="icon">🖼️</span>
-            Add Image
+          <button 
+            className="sidebar-button"
+            onClick={addSlide}
+          >
+            <span className="icon">➕</span>
+            Add Slide
           </button>
-          <button className="sidebar-button">
-            <span className="icon">📊</span>
-            Add Chart
+          <button 
+            className="sidebar-button"
+            onClick={() => deleteSlide(selectedSlide)}
+            disabled={presentation.slides.length <= 1}
+          >
+            <span className="icon">🗑️</span>
+            Delete Slide
           </button>
         </div>
       </div>
