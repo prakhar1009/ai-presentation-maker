@@ -52,6 +52,3 @@ Note: AI features require a Gemini API key. You can get one from [Google AI Stud
 - File-Saver.js
 - JSZip
 
-## License
-
-MIT
