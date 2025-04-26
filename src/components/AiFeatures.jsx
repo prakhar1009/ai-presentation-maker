@@ -10,7 +10,7 @@ export const AiAssistant = ({
   <div className="ai-assistant">
     <h3 className="assistant-title">
       <span className="ai-icon">✨</span>
-      AI Presentation Assistant
+      SlidePilot
     </h3>
     
     <p className="assistant-description">

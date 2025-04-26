@@ -1,4 +1,4 @@
-# AI Presentation generator
+# SlideMind
 
 A powerful tool that uses AI to create professional presentations in minutes.
 

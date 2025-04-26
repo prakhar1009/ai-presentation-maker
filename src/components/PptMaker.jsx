@@ -1065,7 +1065,7 @@ const PptMaker = () => {
       {/* Header */}
       <div className="app-header">
         <div>
-          <h1 className="app-title">AI Presentation Maker</h1>
+          <h1 className="app-title">SlideMind</h1>
           <p className="app-subtitle">Create professional presentations in minutes</p>
         </div>
         {presentationView && (
