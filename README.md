@@ -54,4 +54,4 @@ Note: AI features require a Gemini API key. You can get one from [Google AI Stud
 
 ## Demo Link
 
-https://whimsical-axolotl-c7909c.netlify.app/
+https://slide-mind.netlify.app/
