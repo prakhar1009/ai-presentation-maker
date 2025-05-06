@@ -60,11 +60,28 @@ export const ApiKeyModal = ({
             value={apiKeyInput}
             onChange={(e) => setApiKeyInput(e.target.value)}
             className="form-input"
-            placeholder="Enter your API key"
+            placeholder="Enter your API key (e.g., *******xft)"
           />
           <small className="form-helper">
             Your API key is stored locally and never sent to our servers. You can get a Gemini API key from <a href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer">Google AI Studio</a>.
           </small>
+          <div className="api-key-suggestion">
+            <div className="api-key-options">
+              <button 
+                className="button button-small" 
+                onClick={() => setApiKeyInput('AIzaSyAHvJNToxQdpMK0BwHpyGQZYlXSTN0DDI4')}
+              >
+                Use API key 1 (*******DDI4)
+              </button>
+              
+              <button 
+                className="button button-small" 
+                onClick={() => setApiKeyInput('AIzaSyAc0ZQ8mWxkmIuwbkBXcVrl0qV3E1Hx5FE')}
+              >
+                Use API key 2 (*******5FE)
+              </button>
+            </div>
+          </div>
         </div>
         
         <div className="action-container">
